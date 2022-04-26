@@ -13,7 +13,6 @@ from typing import Callable, Dict
 from instance import Instance
 from solution import Solution
 from file_wrappers import StdinFileWrapper, StdoutFileWrapper
-import numpy as np
 import pyomo.environ as pyo
 from pyomo.environ import *
 
