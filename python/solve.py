@@ -6,8 +6,10 @@ For usage, run `python3 solve.py --help`.
 """
 
 import argparse
+from ast import Constant
 import math
 from pathlib import Path
+from re import M
 from typing import Callable, Dict
 
 from instance import Instance
@@ -15,8 +17,7 @@ from solution import Solution
 from file_wrappers import StdinFileWrapper, StdoutFileWrapper
 import pyomo.environ as pyo
 from pyomo.environ import *
-
-
+from pyomo.opt import SolverFactory
 
 def solve_naive(instance: Instance) -> Solution:
     return Solution(
@@ -25,81 +26,99 @@ def solve_naive(instance: Instance) -> Solution:
     ) 
 
 def generate_w(instance, m):
-    w = [[0 for j in instance.D()] for i in instance.D()]
+    w = [[0 for _ in range(instance.D)] for _ in range(instance.D)]
     for i in m.I:
         for j in m.J:
-            if m.x[i, j] == 1:
+            if m.x.extract_values()[(i, j)] == 1:
                 counter = 0
                 for x in m.I:
                     for y in m.J:
                         if x != i and y != j:
-                            if m.x[x, y] == 1 and euclid_distance(i, x, j, y) <= m.rp:
+                            if m.x.extract_values()[(x, y)] == 1 and euclid_distance(i, x, j, y) <= m.rp:
                                 counter += 1
                 w[i][j] = counter
     return w
 
 def generate_cities(instance):
-    grid = [[0 for j in instance.D()] for i in instance.D()]
+    grid = [[0 for _ in range(instance.D)] for _ in range(instance.D)]
     for city in instance.cities:
         i = city.x
         j = city.y
         grid[i][j] = 1
     return grid
 
-
 def euclid_distance(x1, x2, y1, y2):
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** (1/2)
 
-def solve(instance: Instance) -> Solution:
-    model = pyo.AbstractModel()
-
-    model.I = pyo.RangeSet(1, instance.D(), 1)
-    model.J = pyo.RangeSet(1, instance.D(), 1)
-
-    # PARAMETERS
-    model.rs = instance.R_s()
-    model.rp = instance.R_p()
-    # m.c is 2D array with entry 1 if city at (i, j)
-    model.c = generate_cities(instance)
-    # m.w is 2D array with entry count of towers <= rp for tower at (i, j)
-    model.w = generate_w(instance, model)
-
-    # VARIABLES
-    # m.x is 1 if tower at (i, j)
-    model.x = pyo.Var(model.I, model.J, domain=pyo.Binary)
-
-
-    # OBJECTIVE
+def solve_minlp(instance: Instance) -> Solution:
     def obj_expression(m):
         penalty = 0
+        # w is 2D array with entry count of towers <= rp for tower at (i, j)
+        w = generate_w(instance, m)
         for i in m.I:
             for j in m.J:
-                penalty += 170 * m.x[i, j] * math.e ** (0.17 * w[i][j]) 
+                penalty += 170 * m.x.extract_values()[(i, j)] * math.e ** (0.17 * w[i][j]) 
+        print('Penalty:', penalty)
         return penalty
-
-    model.OBJ = pyo.Objective(rule=obj_expression, sense=minimize)
-
-    # CONSTRAINTS
-    model.citiesConstraint = pyo.Constraint(model.I, model.J, rule=cities_covered_rule)
 
     def cities_covered_rule(m, i, j):
         # return the expression for the constraint for (i, j)
+        print('city:', m.c[i][j])
         if m.c[i][j] == 1:
             counter = 0
             for x in m.I:
                 for y in m.J:
-                    if m.x[x, y] == 1 and euclid_distance(i, x, j, y) <= m.rs:
+                    if m.x.extract_values()[(x, y)] == 1 and euclid_distance(i, x, j, y) <= m.rs:
                         counter += 1
+            print('counter:', counter)
             if counter < 1:
-                return False
-        return True
+                print('infeasible')
+                return Constraint.Infeasible
+        print('feasible')
+        return Constraint.Feasible
 
-    SolverFactory('mindtpy').solve(model, mip_solver='glpk', nlp_solver='ipopt')
+    model = pyo.AbstractModel()
+
+    model.I = pyo.RangeSet(0, instance.D - 1, 1)
+    model.J = pyo.RangeSet(0, instance.D - 1, 1)
+    # model.I  = pyo.Set(initialize=range(instance.D))
+    # model.J  = pyo.Set(initialize=range(instance.D))
+    # model.IJ = pyo.Set(within=model.I * model.J, initialize =[(i, j) for i in range(instance.D) for j in range(instance.D)])
+
+    # VARIABLES
+    # m.x is 1 if tower at (i, j)
+    model.x = pyo.Var(model.I, model.J, domain=pyo.Binary, initialize=1)
+    # model.x = pyo.Var(model.IJ, domain=pyo.Binary)
+
+    # PARAMETERS
+    model.rs = instance.R_s
+    model.rp = instance.R_p
+    # m.c is 2D array with entry 1 if city at (i, j)
+    model.c = generate_cities(instance)
+
+    # OBJECTIVE
+    model.OBJ = pyo.Objective(rule=obj_expression, sense=pyo.minimize)
+    
+    # CONSTRAINTS
+    model.citiesConstraint = pyo.Constraint(model.I, model.J, rule=cities_covered_rule)
+
+    inst = model.create_instance()
+    results = SolverFactory('mindtpy')
+    results.solve(inst, tee=True)
+    print(results)
+
+    # results.display()
+    # results.print()
+
+    # m = pyo.build_model(model)
+    # results = SolverFactory('glpk').solve(m)
+
+    # results = SolverFactory('mindtpy').solve(model, mip_solver='glpk', nlp_solver='ipopt', tee=True, iteration_limit=1000000)
 
 
 SOLVERS: Dict[str, Callable[[Instance], Solution]] = {
     "naive": solve_naive,
-    "cococo": solve
+    "cococo": solve_minlp
 }
 
 
