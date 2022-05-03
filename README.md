@@ -31,8 +31,11 @@ To run unit tests, run `make check`.
 We've created a solver skeleton at [`python/solve.py`](python/solve.py).
 ```bash
 python3 solve.py case.in --solver=naive case.out
+
 python3 python/solve.py inputs/small/001.in --solver=greedy case.out
+python3 python/solve.py inputs/large/047.in --solver=greedy 047.out
 python3 python/solve.py inputs/large/134.in --solver=greedy outputs/large/134.out
+python3 python/solve.py inputs/large/134.in --solver=greedy 134-1.out
 ```
 
 We've also created a skeleton that runs your solver on all cases and puts them

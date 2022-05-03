@@ -78,7 +78,7 @@ def count_neighbors(instance, cities, towers, x, y):
 
     for tower in towers:
         if euclid_distance(x, tower.x, y, tower.y) <= instance.R_p:
-            weight -= 1
+            weight -= 0.5
     return (count, weight)
 
 def euclid_distance(x1, x2, y1, y2):
