@@ -20,7 +20,6 @@ from solution import Solution
 # Modify this line to import your own solvers.
 # YOUR CODE HERE
 from solve import solve_naive
-# from solve import solve_minlp
 from solve import solve_greedy
 
 
