@@ -44,6 +44,7 @@ def greedy(instance: Instance) -> List[Point]:
         grid[city.x][city.y] = 1
 
     while num_cities > 0:
+        print(num_cities)
         # get all valid towers
         num_cities_covered = []
         for i in range(instance.D):
@@ -74,8 +75,8 @@ def greedy(instance: Instance) -> List[Point]:
 
 def count_neighbors(instance, grid, x, y, towers):
     count = 0  
-    for i in range(x - instance.R_p, x + instance.R_p + 1):
-        for j in range(y - instance.R_p, y + instance.R_p + 1):
+    for i in range(x - instance.R_s, x + instance.R_s + 1):
+        for j in range(y - instance.R_s, y + instance.R_s + 1):
             if 0 <= i < instance.D and 0 <= j < instance.D:
                 if euclid_distance(x, i, y, j) <= instance.R_p: 
                     if grid[i][j] == 2:
