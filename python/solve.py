@@ -44,12 +44,11 @@ def greedy(instance: Instance) -> List[Point]:
         grid[city.x][city.y] = 1
 
     while num_cities > 0:
-        print(num_cities)
         # get all valid towers
         num_cities_covered = []
         for i in range(instance.D):
             for j in range(instance.D):
-                heappush(num_cities_covered, (-count_neighbors(instance, grid, i, j, towers), (i, j)))
+                heappush(num_cities_covered, (-count_neighbors(instance, grid, i, j), (i, j)))
         
         # choose a tower
         top_towers = [heappop(num_cities_covered) for _ in range(instance.D // 10)]
@@ -63,17 +62,14 @@ def greedy(instance: Instance) -> List[Point]:
         # process tower (edit grid, edit instance.cities)
         for i in range(tower_x - instance.R_s, tower_x + instance.R_s + 1):
             for j in range(tower_y - instance.R_s, tower_y + instance.R_s + 1):
-                # print("lee")
                 if 0 <= i < instance.D and 0 <= j < instance.D and euclid_distance(tower_x, i, tower_y, j) <= instance.R_s:
-                    # print("colette")
                     if grid[i][j] == 1:
-                        # print("for hkn officer")
                         grid[i][j] = 0
                         num_cities -= 1
-    
+
     return towers
 
-def count_neighbors(instance, grid, x, y, towers):
+def count_neighbors(instance, grid, x, y):
     count = 0  
     for i in range(x - instance.R_s, x + instance.R_s + 1):
         for j in range(y - instance.R_s, y + instance.R_s + 1):
