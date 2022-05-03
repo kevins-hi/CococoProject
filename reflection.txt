@@ -1,0 +1,13 @@
+Q: Describe the algorithm you used to generate your outputs. Why do you think it is a good approach?
+A: The algo we implemented uses a probabilistic greedy algorithm that (1) randomly chooses to place a tower 
+from the top D // 7 tower choices at a given moment and (2) manages tower weights that reflect qualities that
+make a tower location more ideal (eg. more weight if covering cities on edges/corners, less weight for towers within R_p).
+We believe this is a good approach because it utilizes the efficiency and simplicity of a greedy algorithm while 
+also taking probabilistic factors into account.
+
+Q: What other approaches did you try? How did they perform?
+A: We initially attempted to make use of nonlinear programming libraries, but could not get it to work.  We then 
+started off with a simple greedy approach, but quickly found this would not be sufficient.
+
+Q: What computational resources did you use?
+A: Python random and heapq libraries

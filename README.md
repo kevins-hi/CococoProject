@@ -1,5 +1,10 @@
 # Spring 2022 CS170 Project Skeleton
 
+## Instructions
+
+To run solver, run "python3 python/solve_all.py inputs outputs" in the root directory.  Make sure there does not already exist an output folder in root directory.
+
+
 ## Requirements
 
 A Python skeleton is available in the `python` subdirectory. The Python
@@ -69,3 +74,4 @@ To visualize a solution file for this instance as well, you could run
 ```bash
 python3 visualize.py my_input.in --with-solution my_soln.out out.svg
 ```
+

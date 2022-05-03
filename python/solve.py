@@ -48,15 +48,16 @@ def greedy(instance: Instance) -> List[Point]:
         num_cities_covered = []
         for i in range(instance.D):
             for j in range(instance.D):
-                heappush(num_cities_covered, (-count_neighbors(instance, grid, i, j), (i, j)))
+                heappush(num_cities_covered, (-count_neighbors(instance, grid, i, j, towers), (i, j)))
         
         # choose a tower
-        top_towers = [heappop(num_cities_covered) for _ in range(instance.D // 7)]
+        top_towers = [heappop(num_cities_covered) for _ in range(instance.D // 10)]
         top_tower = random.choice(top_towers)
         tower_pos = top_tower[1]
         tower_x = tower_pos[0]
         tower_y = tower_pos[1]
         towers.append(Point(tower_x, tower_y))
+        grid[tower_x][tower_y] = 2
 
         # process tower (edit grid, edit instance.cities)
         for i in range(tower_x - instance.R_s, tower_x + instance.R_s + 1):
@@ -71,13 +72,23 @@ def greedy(instance: Instance) -> List[Point]:
     
     return towers
 
-def count_neighbors(instance, grid, x, y):
-    count = 0
-    for i in range(x - instance.R_s, x + instance.R_s + 1):
-        for j in range(y - instance.R_s, y + instance.R_s + 1):
-            if 0 <= i < instance.D and 0 <= j < instance.D and euclid_distance(x, i, y, j) <= instance.R_s:
-                if grid[i][j] == 1:
-                    count += 1
+def count_neighbors(instance, grid, x, y, towers):
+    count = 0  
+    for i in range(x - instance.R_p, x + instance.R_p + 1):
+        for j in range(y - instance.R_p, y + instance.R_p + 1):
+            if 0 <= i < instance.D and 0 <= j < instance.D:
+                if euclid_distance(x, i, y, j) <= instance.R_p: 
+                    if grid[i][j] == 2:
+                        count -= 0.5
+                if euclid_distance(x, i, y, j) <= instance.R_s:
+                    if grid[i][j] == 1:
+                        count += 1
+                        # if (i, j) is on border
+                        if min(i, instance.D - i - 1) == 0 or min(j, instance.D - j - 1) == 0:
+                            count += instance.R_s
+                            # if (i, j) is corner, add even more weight
+                            if min(i, instance.D - i - 1) == 0 and min(j, instance.D - j - 1) == 0: 
+                                count += 2    
     return count
 
 # def generate_w(instance, m):
